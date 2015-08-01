@@ -1,6 +1,5 @@
 package com.tripadvisor.utils;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
@@ -26,8 +25,18 @@ public class Utils {
 	}
 
 	public String getCoordinatesFromLocation(String location) {
-		String result = geoLocationsAmericas.getCoordinatesFromLocation(location);
-		return result != null ? result : geoLocationsGlobal.getCoordinatesFromLocation(location);
+		//TODO - improve coordinate resolving
+		for (GeoLocationInfo geoLocation: geoLocationsAmericas.getData()) {
+			if (location.toLowerCase().contains(geoLocation.getCapital().toLowerCase())) {
+				return geoLocation.getCapital_latitude() + "," + geoLocation.getCapital_longitude();
+			}
+		}
+		for (GeoLocationInfo geoLocation: geoLocationsGlobal.getData()) {
+			if (location.toLowerCase().contains(geoLocation.getCapital().toLowerCase())) {
+				return geoLocation.getCapital_latitude() + "," + geoLocation.getCapital_longitude();
+			}
+		}
+		return null;
 	}
 
 }

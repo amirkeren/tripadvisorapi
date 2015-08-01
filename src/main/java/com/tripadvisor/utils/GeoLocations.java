@@ -17,15 +17,6 @@ public class GeoLocations {
         this.data = data;
     }
 
-    public String getCoordinatesFromLocation(String location) {
-        for (GeoLocationInfo geoLocation: getData()) {
-            if (location.toLowerCase().contains(geoLocation.getCapital().toLowerCase())) {
-                return geoLocation.getCapital_latitude() + "," + geoLocation.getCapital_longitude();
-            }
-        }
-        return null;
-    }
-
 }
 
 class GeoLocationInfo {
