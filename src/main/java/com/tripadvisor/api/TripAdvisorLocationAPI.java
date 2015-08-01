@@ -17,6 +17,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by Amir Keren on 08/07/2015.
@@ -140,8 +142,7 @@ public class TripAdvisorLocationAPI {
 	 * @param request request, including optional filters (use null if no filters required)
 	 */
 	private ResponseEntity<String> runQuery(String location, Request request) throws IOException {
-		String locationId = null;
-		String coordinates = null;
+		String coordinates = null, locationId;
 		if (isCoordinates(location)) {
 			coordinates = location;
 		} else if (!isLocationId(location)) {
@@ -149,6 +150,8 @@ public class TripAdvisorLocationAPI {
 		}
 		if (!isLocationId(location)) {
 			locationId = getLocationIdFromCoordinates(coordinates);
+		} else {
+			locationId = location;
 		}
 		String queryUrl = "http://api.tripadvisor.com/api/partner/2.0/location/" + locationId + "/" +
 				request.getFilter() + "?key=" + apiKey;
@@ -177,22 +180,17 @@ public class TripAdvisorLocationAPI {
 	}
 
 	private boolean isCoordinates(String location) {
-		try {
-			Double.parseDouble(location.split(",")[0]);
-			Double.parseDouble(location.split(",")[1]);
-		} catch (Exception ex) {
-			return false;
-		}
-		return true;
+		String pattern = "^(\\-?\\d+(\\.\\d+)?),\\s*(\\-?\\d+(\\.\\d+)?)$";
+		Pattern r = Pattern.compile(pattern);
+		Matcher m = r.matcher(location);
+		return m.matches();
 	}
 
 	private boolean isLocationId(String location) {
-		try {
-			Integer.parseInt(location);
-		} catch (Exception ex) {
-			return false;
-		}
-		return true;
+		String pattern = "^[0-9]+$";
+		Pattern r = Pattern.compile(pattern);
+		Matcher m = r.matcher(location);
+		return m.matches();
 	}
 
 }
