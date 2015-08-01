@@ -16,10 +16,10 @@ Note that there are two ways to search for information about locations using the
 
 Example for usage (see test.Main class) - 
 
-TripAdvisorLocationAPI api = new TripAdvisorLocationAPI("<Trip Advisor API Key>", "<Google API Key>");
+```TripAdvisorLocationAPI api = new TripAdvisorLocationAPI("<Trip Advisor API Key>", "<Google API Key>");
 List<Attraction> attractions = api.getAttractions("New York, NY, USA", new AttractionsRequest(null, null, null));
 for (Attraction attraction: attractions) {
   System.out.println(attraction.getName());
-}
+}```
 
 More information on the API itself can be found here - https://developer-tripadvisor.com/content-api/documentation/
