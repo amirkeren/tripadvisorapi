@@ -1,10 +1,10 @@
 # Trip Advisor API
 Version 1.0
-Java implementation for the Trip Advisor API, Amir Keren, 2015
+Java wrapper for the Trip Advisor API, Amir Keren, 2015
 
 This project allows for an easy integration to the Trip Advisor API using Java.
 
-Requires - Java 1.7, Maven and a valid Trip Advisor API Key
+Requires - Java 1.7 and up, Maven and a valid Trip Advisor API Key
 (this can be obtained by submitting a request here - https://developer-tripadvisor.com/content-api/request-api-access/)
 
 Note that there are two ways to search for information about locations using the API -

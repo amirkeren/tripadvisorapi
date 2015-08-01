@@ -16,12 +16,22 @@ public class GooglePlacesLocationAPI {
 
 	private GooglePlaces context;
 
+	/**
+	 * Initializes Google Places API
+	 *
+	 * @param apiKey Google API key
+	 */
 	public GooglePlacesLocationAPI(String apiKey) {
 		log.debug("Initializing Google Places API");
 		context = new GooglePlaces(apiKey);
 		log.debug("Google Maps API Initialized");
 	}
 
+	/**
+	 * Searches google places for the coordinates of the name of the place provided
+	 *
+	 * @param place name of the place
+	 */
 	public String getCoordinatesForLocation(String place) {
 		List<Place> places = context.getPlacesByQuery(place, GooglePlaces.MAXIMUM_RESULTS);
 		if (places.size() > 0) {
