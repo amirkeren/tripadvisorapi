@@ -10,8 +10,8 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        TripAdvisorLocationAPI api = new TripAdvisorLocationAPI("<Trip Advisor API Key>", "<Google API Key>");
-        List<Attraction> attractions = api.getAttractions("New York, NY, USA", new AttractionsRequest(null, null, null));
+        TripAdvisorLocationAPI api = new TripAdvisorLocationAPI("<Your Trip Advisor API Key Here>");
+        List<Attraction> attractions = api.getAttractions("Boston, MA, USA", new AttractionsRequest(null, null, null));
         for (Attraction attraction: attractions) {
             System.out.println(attraction.getName());
         }

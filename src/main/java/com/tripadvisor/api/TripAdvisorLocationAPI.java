@@ -9,7 +9,6 @@ import com.tripadvisor.api.responses.AttractionsResponse;
 import com.tripadvisor.api.responses.HotelsResponse;
 import com.tripadvisor.api.responses.MapResponse;
 import com.tripadvisor.api.responses.RestaurantsResponse;
-import com.tripadvisor.utils.GooglePlacesLocationAPI;
 import com.tripadvisor.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +25,7 @@ public class TripAdvisorLocationAPI {
 
 	private Logger log = LoggerFactory.getLogger(TripAdvisorLocationAPI.class);
 
-	private GooglePlacesLocationAPI googlePlacesAPI;
+	private Utils utils;
 	private RestTemplate restTemplate;
 	private HttpHeaders headers;
 	private String apiKey;
@@ -36,26 +35,12 @@ public class TripAdvisorLocationAPI {
 	 *
 	 * @param apiKey Trip Advisor key
 	 */
-	public TripAdvisorLocationAPI(String apiKey) {
+	public TripAdvisorLocationAPI(String apiKey) throws IOException {
 		log.debug("Initializing Trip Advisor API");
 		this.apiKey = apiKey;
 		restTemplate = new RestTemplate();
 		headers = new HttpHeaders();
-		log.debug("Trip Advisor API Initialized");
-	}
-
-	/**
-	 * optional second constructor, requires the Trip Advisor API key and Google API key
-	 *
-	 * @param apiKey Trip Advisor API key
-	 * @param googleAPI Google API key
-	 */
-	public TripAdvisorLocationAPI(String apiKey, String googleAPI) {
-		log.debug("Initializing Trip Advisor API");
-		this.apiKey = apiKey;
-		googlePlacesAPI = new GooglePlacesLocationAPI(googleAPI);
-		restTemplate = new RestTemplate();
-		headers = new HttpHeaders();
+		utils = new Utils();
 		log.debug("Trip Advisor API Initialized");
 	}
 
@@ -70,8 +55,10 @@ public class TripAdvisorLocationAPI {
 				"?key=" + apiKey;
 		ResponseEntity<String> response = runQueryAux(queryUrl, null);
 		if (response != null && response.getStatusCode() == HttpStatus.OK) {
-			MapResponse result = Utils.getMapper().readValue(response.getBody().getBytes(), MapResponse.class);
-			return result.getData().get(0).getAncestors().get(0).getLocation_id();
+			MapResponse result = utils.getMapper().readValue(response.getBody().getBytes(), MapResponse.class);
+			if (result.getData().size() > 0) {
+				return result.getData().get(0).getAncestors().get(0).getLocation_id();
+			}
 		}
 		log.error("Failed to get id from coordinates");
 		if (response != null) {
@@ -83,14 +70,14 @@ public class TripAdvisorLocationAPI {
 	/**
 	 * Gets the top 10 most popular attractions in the given location
 	 *
-	 * @param location name of the place (if googleAPI is initialized), coordinates or locationId
+	 * @param location name of the place, coordinates or locationId
 	 * @param request request, including optional filters (use null if no filters required)
 	 */
 	public List<Attraction> getAttractions(String location, AttractionsRequest request) throws IOException {
 		log.debug("Getting list of attractions for {}", location);
 		ResponseEntity<String> response = runQuery(location, request);
 		if (response != null && response.getStatusCode() == HttpStatus.OK) {
-			AttractionsResponse result = Utils.getMapper().readValue(response.getBody().getBytes(),
+			AttractionsResponse result = utils.getMapper().readValue(response.getBody().getBytes(),
 					AttractionsResponse.class);
 			log.debug("Found {} attractions", result.getData().size());
 			return result.getData();
@@ -105,14 +92,14 @@ public class TripAdvisorLocationAPI {
 	/**
 	 * Gets the top 10 most popular restaurants in the given location
 	 *
-	 * @param location name of the place (if googleAPI is initialized), coordinates or locationId
+	 * @param location name of the place, coordinates or locationId
 	 * @param request request, including optional filters (use null if no filters required)
 	 */
 	public List<Restaurant> getRestaurants(String location, Request request) throws IOException {
 		log.debug("Getting list of restaurants for {}", location);
 		ResponseEntity<String> response = runQuery(location, request);
 		if (response != null && response.getStatusCode() == HttpStatus.OK) {
-			RestaurantsResponse result = Utils.getMapper().readValue(response.getBody().getBytes(),
+			RestaurantsResponse result = utils.getMapper().readValue(response.getBody().getBytes(),
 					RestaurantsResponse.class);
 			log.debug("Found {} restaurants", result.getData().size());
 			return result.getData();
@@ -127,14 +114,14 @@ public class TripAdvisorLocationAPI {
 	/**
 	 * Gets the top 10 most popular hotels in the given location
 	 *
-	 * @param location name of the place (if googleAPI is initialized), coordinates or locationId
+	 * @param location name of the place, coordinates or locationId
 	 * @param request request, including optional filters (use null if no filters required)
 	 */
 	public List<Hotel> getHotels(String location, Request request) throws IOException {
 		log.debug("Getting list of hotels for {}", location);
 		ResponseEntity<String> response = runQuery(location, request);
 		if (response != null && response.getStatusCode() == HttpStatus.OK) {
-			HotelsResponse result = Utils.getMapper().readValue(response.getBody().getBytes(),
+			HotelsResponse result = utils.getMapper().readValue(response.getBody().getBytes(),
 					HotelsResponse.class);
 			log.debug("Found {} hotels", result.getData().size());
 			return result.getData();
@@ -149,21 +136,19 @@ public class TripAdvisorLocationAPI {
 	/**
 	 * Converts the location to locationId if necessary, builds the URL and sends the request
 	 *
-	 * @param location name of the place (if googleAPI is initialized), coordinates or locationId
+	 * @param location name of the place, coordinates or locationId
 	 * @param request request, including optional filters (use null if no filters required)
 	 */
 	private ResponseEntity<String> runQuery(String location, Request request) throws IOException {
 		String locationId = null;
-		//if google API is initialized and the location provided is a name
-		if (googlePlacesAPI != null && !isLocationId(location) && !isCoordinates(location)) {
-			String coordinates = googlePlacesAPI.getCoordinatesForLocation(location);
+		String coordinates = null;
+		if (isCoordinates(location)) {
+			coordinates = location;
+		} else if (!isLocationId(location)) {
+			coordinates = utils.getCoordinatesFromLocation(location);
+		}
+		if (!isLocationId(location)) {
 			locationId = getLocationIdFromCoordinates(coordinates);
-		//else if the location is coordinates
-		} else if (isCoordinates(location)) {
-			locationId = getLocationIdFromCoordinates(location);
-		//else if the location is a locationId
-		} else if (isLocationId(location)) {
-			locationId = location;
 		}
 		String queryUrl = "http://api.tripadvisor.com/api/partner/2.0/location/" + locationId + "/" +
 				request.getFilter() + "?key=" + apiKey;
